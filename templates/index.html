@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wikipedia Category Word Cloud</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        input[type="text"] {
+            padding: 8px;
+            font-size: 16px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        select {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .color-preview {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 24px;
+        }
+        .color-preview div {
+            width: 20px;
+            height: 20px;
+            border-radius: 2px;
+        }
+        #loading {
+            display: none;
+            margin: 20px 0;
+        }
+        #wordCloud {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        #topWords {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wikipedia Category Word Cloud</h1>
+        <div class="input-group">
+            <input type="text" id="category" placeholder="Enter Wikipedia category name">
+            <select id="colorPalette" onchange="updateColorPreview()">
+                <option value="MaterialLightBlue">Material Light Blue</option>
+                <option value="MaterialTeal">Material Teal</option>
+                <option value="MaterialBrown">Material Brown</option>
+                <option value="MaterialBlueGrey">Material Blue Grey</option>
+                <option value="MaterialGrey">Material Grey</option>
+                <option value="DefaultColourPalette">Default Colors</option>
+            </select>
+            <div id="colorPreview" class="color-preview"></div>
+            <button onclick="analyzeCategory()">Generate Word Cloud</button>
+        </div>
+        <div id="loading">Analyzing category... This may take a few minutes...</div>
+        <div id="error" class="error"></div>
+        <img id="wordCloud" style="display: none;">
+        <div id="topWords"></div>
+    </div>
+
+    <script>
+        function analyzeCategory() {
+            const category = document.getElementById('category').value;
+            if (!category) {
+                showError('Please enter a category name');
+                return;
+            }
+
+            // Show loading message
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('wordCloud').style.display = 'none';
+            document.getElementById('topWords').innerHTML = '';
+
+            const colorPalette = document.getElementById('colorPalette').value;
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    category: category,
+                    colorPalette: colorPalette
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                // Display word cloud
+                const wordCloud = document.getElementById('wordCloud');
+                wordCloud.src = 'data:image/png;base64,' + data.wordCloudImage;
+                wordCloud.style.display = 'block';
+
+                // Display top words
+                const topWordsHtml = '<h2>Top 20 Words</h2><ul>' +
+                    Object.entries(data.topWords)
+                        .map(([word, freq]) => `<li>${word}: ${freq}</li>`)
+                        .join('') +
+                    '</ul>';
+                document.getElementById('topWords').innerHTML = topWordsHtml;
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                showError('An error occurred while analyzing the category');
+                console.error('Error:', error);
+            });
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+        async function updateColorPreview() {
+            const colorPalette = document.getElementById('colorPalette').value;
+            const response = await fetch('/get_palette_colors', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ palette: colorPalette })
+            });
+            const colors = await response.json();
+            
+            const preview = document.getElementById('colorPreview');
+            preview.innerHTML = '';
+            colors.forEach(color => {
+                const div = document.createElement('div');
+                div.style.backgroundColor = color;
+                preview.appendChild(div);
+            });
+        }
+
+        // Initialize color preview
+        updateColorPreview();
+    </script>
+</body>
+</html>
