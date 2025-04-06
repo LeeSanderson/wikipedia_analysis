@@ -64,12 +64,34 @@
             display: none;
             margin: 20px 0;
         }
-        #wordCloud {
-            max-width: 100%;
+        .results-container {
+            display: flex;
+            gap: 20px;
             margin-top: 20px;
+            align-items: flex-start;
+        }
+        #wordCloud {
+            flex: 1;
+            max-width: 600px;
+            width: 100%;
+            height: auto;
         }
         #topWords {
-            margin-top: 20px;
+            min-width: 200px;
+            padding: 15px;
+            border: 2px solid #ff0000;
+            border-radius: 4px;
+            background-color: rgba(255, 0, 0, 0.05);
+        }
+        #topWords h3 {
+            margin-top: 0;
+            color: #ff0000;
+            margin-bottom: 15px;
+        }
+        .word-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
         }
         .error {
             color: red;
@@ -95,8 +117,13 @@
         </div>
         <div id="loading">Analyzing category... This may take a few minutes...</div>
         <div id="error" class="error"></div>
-        <img id="wordCloud" style="display: none;">
-        <div id="topWords"></div>
+        <div class="results-container">
+            <div id="topWords" style="display: none;">
+                <h3>Top 20 Words</h3>
+                <div id="wordList"></div>
+            </div>
+            <img id="wordCloud" style="display: none;">
+        </div>
     </div>
 
     <script>
@@ -108,12 +135,15 @@
             }
 
             // Show loading message
+            // Reset displays and show loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
             document.getElementById('wordCloud').style.display = 'none';
-            document.getElementById('topWords').innerHTML = '';
+            document.getElementById('topWords').style.display = 'none';
+            document.getElementById('wordList').innerHTML = '';
 
             const colorPalette = document.getElementById('colorPalette').value;
+
             fetch('/analyze', {
                 method: 'POST',
                 headers: {
@@ -133,18 +163,26 @@
                     return;
                 }
 
-                // Display word cloud
+                // Display results
                 const wordCloud = document.getElementById('wordCloud');
+                const topWordsDiv = document.getElementById('topWords');
+                const wordListDiv = document.getElementById('wordList');
+
+                // Update word cloud
                 wordCloud.src = 'data:image/png;base64,' + data.wordCloudImage;
                 wordCloud.style.display = 'block';
-
-                // Display top words
-                const topWordsHtml = '<h2>Top 20 Words</h2><ul>' +
-                    Object.entries(data.topWords)
-                        .map(([word, freq]) => `<li>${word}: ${freq}</li>`)
-                        .join('') +
-                    '</ul>';
-                document.getElementById('topWords').innerHTML = topWordsHtml;
+                
+                // Update top words
+                topWordsDiv.style.display = 'block';
+                let wordListHtml = '';
+                Object.entries(data.topWords).forEach(([word, freq]) => {
+                    wordListHtml += `
+                        <div class="word-item">
+                            <span>${word}</span>
+                            <span>${freq}</span>
+                        </div>`;
+                });
+                wordListDiv.innerHTML = wordListHtml;
             })
             .catch(error => {
                 document.getElementById('loading').style.display = 'none';

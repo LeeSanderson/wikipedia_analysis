@@ -25,7 +25,7 @@ def get_palette_colors(palette_name):
 def generate_word_cloud(word_freq, color_palette=None):
     # Create and generate a word cloud image
     wordcloud_params = {
-        'width': 800,
+        'width': 600,
         'height': 400,
         'background_color': 'white'
     }
