@@ -175,11 +175,14 @@
                 // Update top words
                 topWordsDiv.style.display = 'block';
                 let wordListHtml = '';
-                Object.entries(data.topWords).forEach(([word, freq]) => {
+                const colors = data.colors || [];
+                Object.entries(data.topWords).forEach(([word, freq], index) => {
+                    // Cycle through colors for each word
+                    const color = colors[index % colors.length] || '#000000';
                     wordListHtml += `
                         <div class="word-item">
-                            <span>${word}</span>
-                            <span>${freq}</span>
+                            <span style="color: ${color}">${word}</span>
+                            <span style="color: ${color}">${freq}</span>
                         </div>`;
                 });
                 wordListDiv.innerHTML = wordListHtml;

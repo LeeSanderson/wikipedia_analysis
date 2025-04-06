@@ -85,9 +85,13 @@ def analyze():
         sorted_words = sorted(total_word_freq.items(), key=lambda x: x[1], reverse=True)
         top_words = dict(sorted_words[:20])
 
+        # Get colors for the palette
+        colors = get_palette_colors(color_palette) if color_palette else []
+
         return jsonify({
             'wordCloudImage': word_cloud_img,
-            'topWords': top_words
+            'topWords': top_words,
+            'colors': colors
         })
 
     except Exception as e:
